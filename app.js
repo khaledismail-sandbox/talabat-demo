@@ -4,12 +4,38 @@
    Every Amplitude event is fired through a real user interaction.
    =========================================================================== */
 
-/* ---------- Amplitude init ---------- */
-(function initAmplitude(){
+/* ---------- Stable device ID (shared by analytics + session replay) ---------- */
+const DEVICE_ID_KEY = "talabat_demo_device_id";
+function getStableDeviceId(){
+  let id = null;
+  try { id = localStorage.getItem(DEVICE_ID_KEY); } catch(e){}
+  if (!id){
+    try {
+      id = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : ("dev_" + Math.random().toString(36).slice(2) + "_" + Date.now().toString(36));
+    } catch(e){
+      id = "dev_" + Math.random().toString(36).slice(2);
+    }
+    try { localStorage.setItem(DEVICE_ID_KEY, id); } catch(e){}
+  }
+  return id;
+}
+
+/* ---------- Amplitude init ----------
+   Defined here but NOT invoked yet. It is called exactly once at boot,
+   immediately before any page logic / track() call (see "Boot" at the bottom),
+   so analytics and Session Replay are guaranteed to share the same deviceId. */
+let amplitudeReady = false;
+function initAmplitude(){
+  if (amplitudeReady) return;          // guarantee exactly ONE init() call
   try {
+    const deviceId = getStableDeviceId();
+    // Add Session Replay on the SAME (default) amplitude instance IMMEDIATELY
+    // before init, with no `if` guard, so it inherits the deviceId we pass below.
     window.amplitude.add(window.sessionReplay.plugin({ sampleRate: 1 }));
-    if (window.engagement)    amplitude.add(window.engagement.plugin());
-    amplitude.init("791d6c97320c5752f16c6b6e4a546f81", {
+    window.amplitude.init("791d6c97320c5752f16c6b6e4a546f81", {
+      deviceId: deviceId,
       fetchRemoteConfig: true,
       autocapture: {
         sessions: true,
@@ -23,10 +49,11 @@
         frustrationInteractions: false
       }
     });
+    amplitudeReady = true;
   } catch (e) {
     console.warn("Amplitude init skipped:", e);
   }
-})();
+}
 
 /* track() wrapper — guards the SDK and logs to console for the demo */
 function track(name, props){
@@ -242,7 +269,10 @@ function doLogin(name, demoNumber){
 }
 
 function doLogout(){
-  try { if (window.amplitude) amplitude.reset(); } catch(e){}
+  // Clear only the user identity — do NOT call amplitude.reset(), which would
+  // regenerate the device ID and break the analytics ↔ Session Replay link.
+  // The stable deviceId set at init() persists across login/logout.
+  try { if (window.amplitude) amplitude.setUserId(undefined); } catch(e){}
   state.user = { loggedIn:false, name:"", demoNumber:1, userId:null, savedAddressConfirmed:false, isReturning:state.user.isReturning };
   saveSession();
   updateHeader();
@@ -1065,11 +1095,15 @@ document.getElementById("accountLink").addEventListener("click", e=>{ /* hash ha
 
 /* ===========================================================================
    Boot
+   Order matters: init Amplitude FIRST (sets deviceId + adds Session Replay),
+   then identity, then router() — so the first track ("Home Screen Viewed")
+   only fires after init() has run.
    =========================================================================== */
+initAmplitude();                       // exactly one init, before any track()
 loadSession();
 if (state.user.loggedIn && state.user.userId){
   try { if (window.amplitude) amplitude.setUserId(state.user.userId); } catch(e){}
 }
 applyUserProperties();
 updateHeader();
-router();
+router();                              // first track() call happens here, after init
