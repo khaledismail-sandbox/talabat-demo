@@ -7,9 +7,22 @@
 /* ---------- Amplitude init ---------- */
 (function initAmplitude(){
   try {
-    if (window.sessionReplay) amplitude.add(window.sessionReplay.plugin({ sampleRate: 1 }));
+    window.amplitude.add(window.sessionReplay.plugin({ sampleRate: 1 }));
     if (window.engagement)    amplitude.add(window.engagement.plugin());
-    amplitude.init("791d6c97320c5752f16c6b6e4a546f81", { fetchRemoteConfig: true, autocapture: false });
+    amplitude.init("791d6c97320c5752f16c6b6e4a546f81", {
+      fetchRemoteConfig: true,
+      autocapture: {
+        sessions: true,
+        attribution: true,
+        pageViews: false,
+        formInteractions: false,
+        fileDownloads: false,
+        elementInteractions: false,
+        networkTracking: false,
+        webVitals: false,
+        frustrationInteractions: false
+      }
+    });
   } catch (e) {
     console.warn("Amplitude init skipped:", e);
   }
