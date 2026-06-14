@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>talabat UAE — Food delivery, groceries & more</title>
+  <meta name="description" content="Order food delivery from your favourite restaurants in the UAE. Amplitude analytics demo." />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+
+  <!-- Amplitude SDK (CDN, no build step) -->
+  <script src="https://cdn.amplitude.com/script/791d6c97320c5752f16c6b6e4a546f81.js"></script>
+  <script src="https://cdn.amplitude.com/script/791d6c97320c5752f16c6b6e4a546f81.engagement.js"></script>
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="app-header">
+    <div class="header-inner">
+      <a href="#/" class="brand" aria-label="talabat UAE home">
+        <img src="./assets/logo.svg" alt="talabat UAE" height="32" />
+      </a>
+
+      <button class="location-chip" id="locationChip" title="Delivery location">
+        <span class="pin-ico">📍</span>
+        <span class="loc-text">
+          <span class="loc-label">Deliver to</span>
+          <span class="loc-value" id="locValue">Set location</span>
+        </span>
+        <span class="chev">▾</span>
+      </button>
+
+      <form class="header-search" id="headerSearchForm" role="search">
+        <span class="search-ico">🔍</span>
+        <input type="search" id="searchInput" placeholder="Search restaurants, cuisines or dishes" autocomplete="off" />
+      </form>
+
+      <nav class="header-nav">
+        <a href="#/account" class="nav-link" id="accountLink">👤 Account</a>
+        <button class="basket-btn" id="basketBtn">
+          🛒 <span id="basketCount" class="basket-count">0</span>
+        </button>
+        <button class="login-btn" id="loginBtn">Sign in</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== Main view (rendered by app.js) ===== -->
+  <main id="view" class="view"></main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="app-footer">
+    <p>This is a brand-inspired <strong>demo</strong> of talabat UAE built to showcase Amplitude analytics. Not affiliated with talabat.</p>
+    <p class="muted">Events stream to Amplitude in real time as you interact with the page.</p>
+  </footer>
+
+  <!-- ===== Basket drawer ===== -->
+  <aside class="drawer" id="basketDrawer" aria-hidden="true">
+    <div class="drawer-overlay" data-close-basket></div>
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <h2>Your basket</h2>
+        <button class="icon-btn" data-close-basket aria-label="Close">✕</button>
+      </div>
+      <div id="basketItems" class="basket-items"></div>
+      <div class="promo-row">
+        <input type="text" id="promoInput" placeholder="Promo code (try TALABAT20 or FREEDEL)" />
+        <button id="applyPromoBtn" class="ghost-btn">Apply</button>
+      </div>
+      <div id="promoMsg" class="promo-msg"></div>
+      <div class="basket-summary" id="basketSummary"></div>
+      <button class="primary-btn full" id="checkoutBtn" disabled>Go to checkout</button>
+    </div>
+  </aside>
+
+  <!-- ===== Login modal ===== -->
+  <div class="modal-backdrop" id="loginModal" aria-hidden="true">
+    <div class="modal card-modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="icon-btn modal-x" data-close-login aria-label="Close">✕</button>
+      <h2 id="loginTitle">Sign in to talabat</h2>
+      <p class="muted">Sign in to save your addresses & sync across devices. Or keep exploring as a guest.</p>
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="loginName" placeholder="e.g. Khaled" />
+      </label>
+      <label class="field">
+        <span>Demo number</span>
+        <input type="number" id="loginDemo" value="1" min="1" />
+      </label>
+      <div class="userid-preview">
+        Your demo user id: <code id="useridPreview">—</code>
+      </div>
+      <button class="primary-btn full" id="confirmLoginBtn">Sign in</button>
+      <button class="text-link" data-close-login>Continue as guest</button>
+    </div>
+  </div>
+
+  <!-- ===== Delivery Location Reconfirmation (the friction step) ===== -->
+  <div class="modal-backdrop location-backdrop" id="locationModal" aria-hidden="true">
+    <div class="location-step" role="dialog" aria-modal="true" aria-labelledby="locTitle">
+      <div class="location-head">
+        <button class="icon-btn" id="locBackBtn" aria-label="Back">←</button>
+        <h2 id="locTitle">Confirm your delivery location</h2>
+      </div>
+      <p class="loc-sub">Drag the pin to your exact building so the rider can find you.</p>
+
+      <div class="map" id="map">
+        <!-- stylised street grid -->
+        <div class="map-grid"></div>
+        <div class="map-road road-h" style="top:30%"></div>
+        <div class="map-road road-h" style="top:62%"></div>
+        <div class="map-road road-v" style="left:28%"></div>
+        <div class="map-road road-v" style="left:70%"></div>
+        <div class="map-block" style="top:36%;left:32%">🏢</div>
+        <div class="map-block" style="top:8%;left:74%">🕌</div>
+        <div class="map-block" style="top:66%;left:10%">🏬</div>
+        <div class="map-block" style="top:68%;left:76%">🌴</div>
+        <div class="map-label">Jumeirah · Dubai</div>
+        <div class="map-pin" id="mapPin" tabindex="0" role="slider" aria-label="Delivery pin">
+          <span class="pin-emoji">📍</span>
+          <span class="pin-shadow"></span>
+        </div>
+      </div>
+
+      <div class="loc-addr" id="locAddr">📍 Pin not placed yet — drag it onto your building</div>
+
+      <form class="loc-form" id="locForm">
+        <p class="loc-form-title">Add your delivery details</p>
+        <label class="field">
+          <span>Building / Apartment no. *</span>
+          <input type="text" id="locBuilding" placeholder="e.g. Villa 12, Apt 304" required />
+        </label>
+        <label class="field">
+          <span>Street *</span>
+          <input type="text" id="locStreet" placeholder="e.g. Jumeirah Beach Road" required />
+        </label>
+        <label class="field">
+          <span>Area / Neighbourhood *</span>
+          <input type="text" id="locArea" placeholder="e.g. Jumeirah 1" required />
+        </label>
+        <label class="field">
+          <span>First name *</span>
+          <input type="text" id="locFirstName" placeholder="e.g. Khaled" required />
+        </label>
+        <label class="field">
+          <span>Email address *</span>
+          <input type="email" id="locEmail" placeholder="e.g. you@email.com" required />
+        </label>
+        <p class="loc-form-hint" id="locFormHint"></p>
+      </form>
+
+      <div class="loc-actions">
+        <button class="ghost-btn" id="locCancelBtn">Cancel order</button>
+        <button class="primary-btn" id="locConfirmBtn" disabled>Confirm location & place order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

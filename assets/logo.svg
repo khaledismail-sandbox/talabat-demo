@@ -1,0 +1,9 @@
+<svg width="150" height="34" viewBox="0 0 150 34" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Talabat UAE">
+  <g>
+    <!-- scooter mark -->
+    <circle cx="17" cy="17" r="16" fill="#FF5A00"/>
+    <path d="M9 21.5h2.2a3.3 3.3 0 0 1 6.4 0h3.1l2.1-6.4h-2.6l.6-1.9h4.3l-2.9 8.3h1.1a3.3 3.3 0 1 1 0 1.9h-3.7a3.3 3.3 0 0 1-6.4 0H9v-1.9Zm5.4-.95a1.55 1.55 0 1 0 0 .02v-.02Zm12.1 0a1.55 1.55 0 1 0 0 .02v-.02Z" fill="#fff"/>
+  </g>
+  <text x="40" y="16" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="800" fill="#FF5A00" letter-spacing="-0.5">talabat</text>
+  <text x="40" y="29" font-family="'Segoe UI', Arial, sans-serif" font-size="9" font-weight="700" fill="#5a5a5a" letter-spacing="3">UAE</text>
+</svg>
