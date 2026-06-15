@@ -36,8 +36,10 @@
 
       <nav class="header-nav">
         <a href="#/account" class="nav-link" id="accountLink">👤 Account</a>
-        <button class="basket-btn" id="basketBtn">
-          🛒 <span id="basketCount" class="basket-count">0</span>
+        <button class="basket-btn" id="basketBtn" aria-label="Basket">
+          <span class="basket-ico" aria-hidden="true">🛒</span>
+          <span class="basket-label">Basket</span>
+          <span id="basketCount" class="basket-count">0</span>
         </button>
         <button class="login-btn" id="loginBtn">Sign in</button>
       </nav>
